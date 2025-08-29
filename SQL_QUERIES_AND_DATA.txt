@@ -1,0 +1,218 @@
+# Employee Management System - SQL Database Script
+# Complete Table Creation and Data Insertion Queries
+# Date: August 29, 2025
+
+#==============================================
+# DATABASE CREATION
+#==============================================
+
+-- Create the database
+CREATE DATABASE IF NOT EXISTS employee_db;
+USE employee_db;
+
+#==============================================
+# TABLE CREATION QUERIES
+#==============================================
+
+-- 1. DEPARTMENT Table Creation
+CREATE TABLE IF NOT EXISTS DEPARTMENT (
+    DEPARTMENT_ID BIGINT AUTO_INCREMENT PRIMARY KEY,
+    DEPARTMENT_NAME VARCHAR(100) NOT NULL
+);
+
+-- 2. EMPLOYEE Table Creation  
+CREATE TABLE IF NOT EXISTS EMPLOYEE (
+    EMP_ID BIGINT AUTO_INCREMENT PRIMARY KEY,
+    FIRST_NAME VARCHAR(50) NOT NULL,
+    LAST_NAME VARCHAR(50) NOT NULL,
+    DOB DATE NOT NULL,
+    GENDER VARCHAR(10) NOT NULL,
+    DEPARTMENT BIGINT NOT NULL,
+    FOREIGN KEY (DEPARTMENT) REFERENCES DEPARTMENT(DEPARTMENT_ID)
+);
+
+-- 3. PAYMENTS Table Creation
+CREATE TABLE IF NOT EXISTS PAYMENTS (
+    PAYMENT_ID BIGINT AUTO_INCREMENT PRIMARY KEY,
+    EMP_ID BIGINT NOT NULL,
+    AMOUNT DECIMAL(10,2) NOT NULL,
+    PAYMENT_TIME DATETIME(3) NOT NULL,
+    FOREIGN KEY (EMP_ID) REFERENCES EMPLOYEE(EMP_ID)
+);
+
+#==============================================
+# DATA INSERTION QUERIES
+#==============================================
+
+-- Insert Department Data
+INSERT INTO DEPARTMENT (DEPARTMENT_ID, DEPARTMENT_NAME) VALUES 
+(1, 'HR'),
+(2, 'Finance'),
+(3, 'Engineering'),
+(4, 'Sales'),
+(5, 'Marketing'),
+(6, 'IT');
+
+-- Insert Employee Data
+INSERT INTO EMPLOYEE (EMP_ID, FIRST_NAME, LAST_NAME, DOB, GENDER, DEPARTMENT) VALUES 
+(1, 'John', 'Williams', '1980-05-15', 'Male', 3),
+(2, 'Sarah', 'Johnson', '1990-07-20', 'Female', 2),
+(3, 'Michael', 'Smith', '1985-02-10', 'Male', 3),
+(4, 'Emily', 'Brown', '1992-11-30', 'Female', 4),
+(5, 'David', 'Jones', '1988-09-05', 'Male', 5),
+(6, 'Olivia', 'Davis', '1995-04-12', 'Female', 1),
+(7, 'James', 'Wilson', '1983-03-25', 'Male', 6),
+(8, 'Sophia', 'Anderson', '1991-08-17', 'Female', 4),
+(9, 'Liam', 'Miller', '1979-12-01', 'Male', 1),
+(10, 'Emma', 'Taylor', '1993-06-28', 'Female', 5);
+
+-- Insert Payment Data
+INSERT INTO PAYMENTS (PAYMENT_ID, EMP_ID, AMOUNT, PAYMENT_TIME) VALUES 
+(1, 2, 65784.00, '2025-01-01 13:44:12.824'),
+(2, 4, 62736.00, '2025-01-06 18:36:37.892'),
+(3, 1, 69437.00, '2025-01-01 10:19:21.563'),
+(4, 3, 67183.00, '2025-01-02 17:21:57.341'),
+(5, 2, 66273.00, '2025-02-01 11:49:15.764'),
+(6, 5, 71475.00, '2025-01-01 07:24:14.453'),
+(7, 1, 70837.00, '2025-02-03 19:11:31.553'),
+(8, 6, 69628.00, '2025-01-02 10:41:15.113'),
+(9, 4, 71876.00, '2025-02-01 12:16:47.807'),
+(10, 3, 70098.00, '2025-02-03 10:11:17.341'),
+(11, 6, 67827.00, '2025-02-02 19:21:27.753'),
+(12, 5, 69871.00, '2025-02-05 17:54:17.453'),
+(13, 2, 72984.00, '2025-03-05 09:37:35.974'),
+(14, 1, 67982.00, '2025-03-01 06:09:51.983'),
+(15, 6, 70198.00, '2025-03-02 10:34:35.753'),
+(16, 4, 74998.00, '2025-03-02 09:27:26.162');
+
+#==============================================
+# TABLE STRUCTURE VERIFICATION QUERIES
+#==============================================
+
+-- Check all departments
+SELECT * FROM DEPARTMENT ORDER BY DEPARTMENT_ID;
+
+-- Check all employees
+SELECT * FROM EMPLOYEE ORDER BY EMP_ID;
+
+-- Check all payments
+SELECT * FROM PAYMENTS ORDER BY PAYMENT_ID;
+
+-- Verify employee count by department
+SELECT d.DEPARTMENT_NAME, COUNT(e.EMP_ID) as EMPLOYEE_COUNT
+FROM DEPARTMENT d
+LEFT JOIN EMPLOYEE e ON d.DEPARTMENT_ID = e.DEPARTMENT
+GROUP BY d.DEPARTMENT_ID, d.DEPARTMENT_NAME
+ORDER BY d.DEPARTMENT_ID;
+
+#==============================================
+# MAIN SQL SOLUTION QUERY
+#==============================================
+
+-- Final SQL Query for the Problem Statement:
+-- Calculate the number of employees who are younger than each employee, 
+-- grouped by their respective departments
+
+SELECT e1.EMP_ID,
+       e1.FIRST_NAME,
+       e1.LAST_NAME,
+       d.DEPARTMENT_NAME,
+       COUNT(e2.EMP_ID) as YOUNGER_EMPLOYEES_COUNT
+FROM EMPLOYEE e1
+JOIN DEPARTMENT d ON e1.DEPARTMENT = d.DEPARTMENT_ID
+LEFT JOIN EMPLOYEE e2 ON e1.DEPARTMENT = e2.DEPARTMENT AND e2.DOB > e1.DOB
+GROUP BY e1.EMP_ID, e1.FIRST_NAME, e1.LAST_NAME, d.DEPARTMENT_NAME
+ORDER BY e1.EMP_ID DESC;
+
+#==============================================
+# EXPECTED OUTPUT OF SOLUTION QUERY
+#==============================================
+
+/*
+Expected Results (Employee ID in descending order):
+
+EMP_ID | FIRST_NAME | LAST_NAME | DEPARTMENT_NAME | YOUNGER_EMPLOYEES_COUNT
+-------|------------|-----------|-----------------|------------------------
+10     | Emma       | Taylor    | Marketing       | 0
+9      | Liam       | Miller    | HR              | 1
+8      | Sophia     | Anderson  | Sales           | 1
+7      | James      | Wilson    | IT              | 0
+6      | Olivia     | Davis     | HR              | 0
+5      | David      | Jones     | Marketing       | 1
+4      | Emily      | Brown     | Sales           | 0
+3      | Michael    | Smith     | Engineering     | 1
+2      | Sarah      | Johnson   | Finance         | 0
+1      | John       | Williams  | Engineering     | 0
+
+Explanation:
+- Emma (Marketing): No one younger in Marketing
+- Liam (HR): Olivia is younger in HR (1 younger)
+- Sophia (Sales): Emily is younger in Sales (1 younger)
+- James (IT): Only employee in IT (0 younger)
+- Olivia (HR): Youngest in HR (0 younger)
+- David (Marketing): Emma is younger in Marketing (1 younger)
+- Emily (Sales): Youngest in Sales (0 younger)
+- Michael (Engineering): John is older, no one younger (1 younger)
+- Sarah (Finance): Only employee in Finance (0 younger)
+- John (Engineering): Oldest in Engineering (0 younger)
+*/
+
+#==============================================
+# ADDITIONAL USEFUL QUERIES
+#==============================================
+
+-- Show employee ages (calculated from DOB)
+SELECT EMP_ID, 
+       FIRST_NAME, 
+       LAST_NAME, 
+       DOB,
+       TIMESTAMPDIFF(YEAR, DOB, CURDATE()) as AGE,
+       d.DEPARTMENT_NAME
+FROM EMPLOYEE e
+JOIN DEPARTMENT d ON e.DEPARTMENT = d.DEPARTMENT_ID
+ORDER BY e.EMP_ID;
+
+-- Show department-wise employee details with ages
+SELECT d.DEPARTMENT_NAME,
+       e.EMP_ID,
+       e.FIRST_NAME,
+       e.LAST_NAME,
+       e.DOB,
+       TIMESTAMPDIFF(YEAR, e.DOB, CURDATE()) as AGE
+FROM DEPARTMENT d
+JOIN EMPLOYEE e ON d.DEPARTMENT_ID = e.DEPARTMENT
+ORDER BY d.DEPARTMENT_NAME, e.DOB;
+
+-- Total payments by employee
+SELECT e.EMP_ID,
+       e.FIRST_NAME,
+       e.LAST_NAME,
+       COUNT(p.PAYMENT_ID) as PAYMENT_COUNT,
+       SUM(p.AMOUNT) as TOTAL_AMOUNT
+FROM EMPLOYEE e
+LEFT JOIN PAYMENTS p ON e.EMP_ID = p.EMP_ID
+GROUP BY e.EMP_ID, e.FIRST_NAME, e.LAST_NAME
+ORDER BY e.EMP_ID;
+
+#==============================================
+# EXECUTION INSTRUCTIONS
+#==============================================
+
+/*
+To execute this script:
+
+1. Install MySQL 8.0+
+2. Open MySQL Command Line or MySQL Workbench
+3. Run the entire script to create database, tables, and insert data
+4. Execute the solution query to see the results
+5. Use verification queries to check data integrity
+
+For Spring Boot Application:
+- Update application.properties with your MySQL credentials
+- The application will auto-create tables and insert data on startup
+- The webhook flow will execute the solution query automatically
+*/
+
+#==============================================
+# END OF SQL SCRIPT
+#==============================================
